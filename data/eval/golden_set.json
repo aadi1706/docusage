@@ -1,0 +1,32 @@
+[
+  {
+    "id": "gs_001",
+    "question": "What is the repo rate mentioned in RBI Monetary Policy 2024?",
+    "ground_truth": "The RBI repo rate as of February 2024 is 6.50%.",
+    "source_doc": "RBI_MPC_Feb2024.pdf",
+    "page_numbers": [3],
+    "category": "numeric_extraction",
+    "difficulty": "easy",
+    "notes": "Simple numeric fact — tests basic faithfulness"
+  },
+  {
+    "id": "gs_002",
+    "question": "What are the new KYC norms for small finance banks as per SEBI circular?",
+    "ground_truth": "As per SEBI circular SEBI/HO/MIRSD/2024, small finance banks must complete re-KYC for dormant accounts within 6 months, with biometric verification mandatory for accounts above Rs 10 lakh.",
+    "source_doc": "SEBI_KYC_Circular_2024.pdf",
+    "page_numbers": [2, 4],
+    "category": "multi_page_synthesis",
+    "difficulty": "medium",
+    "notes": "Answer spans two pages — tests retrieval recall"
+  },
+  {
+    "id": "gs_003",
+    "question": "What does the balance sheet table show for total assets in Nifty Bank's Q3 report?",
+    "ground_truth": "Cannot be answered from text extraction — requires table from page 12 (visual page).",
+    "source_doc": "NiftyBank_Q3_2024.pdf",
+    "page_numbers": [12],
+    "category": "table_extraction",
+    "difficulty": "hard",
+    "notes": "Tests ColPali visual retrieval — OCR-based systems fail this"
+  }
+]

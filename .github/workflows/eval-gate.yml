@@ -1,0 +1,44 @@
+name: Eval Gate — RAGAS Threshold Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ragas-eval:
+    name: Run RAGAS Evaluation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run RAGAS eval (CI mode — fails if thresholds not met)
+        env:
+          OPENAI_API_KEY:                    ${{ secrets.OPENAI_API_KEY }}
+          QDRANT_URL:                        ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY:                    ${{ secrets.QDRANT_API_KEY }}
+          LANGFUSE_PUBLIC_KEY:               ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY:               ${{ secrets.LANGFUSE_SECRET_KEY }}
+          RAGAS_FAITHFULNESS_THRESHOLD:      "0.82"
+          RAGAS_CONTEXT_PRECISION_THRESHOLD: "0.75"
+          RAGAS_ANSWER_RELEVANCY_THRESHOLD:  "0.80"
+        run: python evals/ragas_eval.py --ci
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results/

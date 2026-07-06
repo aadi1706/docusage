@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Env
+.env
+*.env
+
+# Data (raw PDFs and images — too large for git)
+data/raw/
+data/images/
+
+# Models (multi-GB — never commit)
+models/
+*.bin
+*.safetensors
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eval results (generated — don't commit)
+evals/results/
+
+# Weights & Biases
+wandb/
