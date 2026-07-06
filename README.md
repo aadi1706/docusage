@@ -6,8 +6,8 @@
 
 *Ask questions over RBI circulars, SEBI regulations, and NSE/BSE annual reports — including tables and charts — with cited, verified answers.*
 
-[![Eval Gate](https://github.com/yourusername/docusage/actions/workflows/eval-gate.yml/badge.svg)](https://github.com/yourusername/docusage/actions)
-[![Docker Build](https://github.com/yourusername/docusage/actions/workflows/docker-build.yml/badge.svg)](https://github.com/yourusername/docusage/actions)
+[![Eval Gate](https://github.com/aadi1706/docusage/actions/workflows/eval-gate.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
+[![Docker Build](https://github.com/aadi1706/docusage/actions/workflows/docker-build.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.2-orange)
 ![ColPali](https://img.shields.io/badge/ColPali-ColQwen2-purple)
@@ -105,7 +105,7 @@ User Query (text)
 
 ```bash
 # 1. Clone
-git clone https://github.com/yourusername/docusage.git
+git clone https://github.com/aadi1706/docusage.git
 cd docusage
 
 # 2. Set up env
@@ -217,4 +217,4 @@ Key decisions documented in `docs/adr/`:
 **Aadi** | CSE Final Year  
 Built as a portfolio project for AI Engineering placements 2025–26.
 
-*Connect on [LinkedIn](https://linkedin.com/in/yourprofile) | [GitHub](https://github.com/yourusername)*
+*Connect on [LinkedIn](https://linkedin.com/in/yourprofile) | [GitHub](https://github.com/aadi1706)*
