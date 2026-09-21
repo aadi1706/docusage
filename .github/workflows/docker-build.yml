@@ -22,6 +22,6 @@ jobs:
           docker run -d -p 8000:8000 --name docusage-test \
             -e OPENAI_API_KEY=test \
             docusage-api:${{ github.sha }}
-          sleep 5
+          sleep 15
           curl -f http://localhost:8000/health
           docker stop docusage-test
