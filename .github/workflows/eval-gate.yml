@@ -25,6 +25,7 @@ jobs:
         run: |
           pip install setuptools
           pip install -r requirements-eval.txt
+          pip install --no-deps ragas==0.1.21
 
       - name: Run RAGAS eval (CI mode — fails if thresholds not met)
         env:
