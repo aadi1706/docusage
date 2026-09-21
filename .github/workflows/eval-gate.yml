@@ -38,7 +38,7 @@ jobs:
           RAGAS_FAITHFULNESS_THRESHOLD:      "0.82"
           RAGAS_CONTEXT_PRECISION_THRESHOLD: "0.75"
           RAGAS_ANSWER_RELEVANCY_THRESHOLD:  "0.80"
-        run: python evals/ragas_eval.py --ci
+        run: python evals/ragas_eval.py
 
       - name: Upload eval results
         if: always()
