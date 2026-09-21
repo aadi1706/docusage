@@ -19,15 +19,13 @@ import argparse
 from pathlib import Path
 from loguru import logger
 
-# These imports will work once dependencies are installed
-# from ragas import evaluate
-# from ragas.metrics import faithfulness, context_precision, answer_relevancy
-# from datasets import Dataset
+from ragas import evaluate
+from ragas.metrics import faithfulness, context_precision, answer_relevancy
+from datasets import Dataset
 
 
 GOLDEN_SET_PATH = Path("data/eval/golden_set.json")
 
-# Thresholds (also set in .env — CI reads from env)
 THRESHOLDS = {
     "faithfulness":       float(os.getenv("RAGAS_FAITHFULNESS_THRESHOLD",  "0.82")),
     "context_precision":  float(os.getenv("RAGAS_CONTEXT_PRECISION_THRESHOLD", "0.75")),
@@ -44,39 +42,53 @@ def load_golden_set() -> list:
 
 
 def run_eval(golden_samples: list, ci_mode: bool = False) -> dict:
-    """
-    Run RAGAS evaluation over golden set.
-    Returns metric scores dict.
-    """
+    """Run RAGAS evaluation over golden set. Returns metric scores dict."""
     if not golden_samples:
         logger.error("No golden samples — cannot evaluate")
         return {}
 
     logger.info(f"Running eval on {len(golden_samples)} golden samples...")
 
-    # TODO Week 8: uncomment and wire up real inference
-    # from agents.graph import run_query
-    # 
-    # ragas_data = {"question": [], "answer": [], "contexts": [], "ground_truth": []}
-    # for sample in golden_samples:
-    #     result = run_query(sample["question"])
-    #     ragas_data["question"].append(sample["question"])
-    #     ragas_data["answer"].append(result.final_answer or "")
-    #     ragas_data["contexts"].append([c.content for c in result.retrieved_chunks])
-    #     ragas_data["ground_truth"].append(sample["ground_truth"])
-    #
-    # dataset = Dataset.from_dict(ragas_data)
-    # scores = evaluate(dataset, metrics=[faithfulness, context_precision, answer_relevancy])
-    # return dict(scores)
+    from agents.graph import run_query
 
-    # Placeholder scores until Week 8
-    mock_scores = {
-        "faithfulness":      0.88,
-        "context_precision": 0.79,
-        "answer_relevancy":  0.84,
+    ragas_data: dict = {"question": [], "answer": [], "contexts": [], "ground_truth": []}
+
+    for i, sample in enumerate(golden_samples):
+        logger.info(f"  [{i+1}/{len(golden_samples)}] {sample['id']}: {sample['question'][:60]}...")
+        try:
+            result = run_query(sample["question"])
+            answer = result.final_answer or ""
+            contexts = [c.content for c in result.retrieved_chunks if c.content.strip()]
+        except Exception as e:
+            logger.warning(f"    run_query failed for {sample['id']}: {e} — using empty answer")
+            answer = ""
+            contexts = []
+
+        # RAGAS requires at least one non-empty context string
+        if not contexts:
+            contexts = ["[no context retrieved]"]
+
+        ragas_data["question"].append(sample["question"])
+        ragas_data["answer"].append(answer)
+        ragas_data["contexts"].append(contexts)
+        ragas_data["ground_truth"].append(sample["ground_truth"])
+
+    dataset = Dataset.from_dict(ragas_data)
+    logger.info("Calling RAGAS evaluate (uses OpenAI) …")
+
+    result = evaluate(
+        dataset,
+        metrics=[faithfulness, context_precision, answer_relevancy],
+        raise_exceptions=False,
+    )
+
+    scores = {
+        "faithfulness":      float(result["faithfulness"]),
+        "context_precision": float(result["context_precision"]),
+        "answer_relevancy":  float(result["answer_relevancy"]),
     }
-    logger.info(f"[MOCK] Eval scores: {mock_scores}")
-    return mock_scores
+    logger.info(f"Eval scores: {scores}")
+    return scores
 
 
 def check_thresholds(scores: dict) -> tuple[bool, list]:
