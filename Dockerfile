@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir setuptools wheel
 RUN grep -v "openai-whisper" requirements.txt | grep -v "ragas" | grep -v "^#" | grep -v "^$" > /tmp/req_no_whisper.txt && pip install --no-cache-dir -r /tmp/req_no_whisper.txt
 RUN pip install --no-cache-dir pysbd appdirs
 RUN pip install --no-cache-dir --no-deps ragas==0.1.21
-RUN pip install --no-cache-dir git+https://github.com/openai/whisper.git
+RUN pip install --no-cache-dir setuptools && pip install --no-cache-dir openai-whisper --no-build-isolation
 
 COPY . .
 
