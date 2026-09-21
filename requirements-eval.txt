@@ -11,9 +11,10 @@ langchain-openai==0.2.8
 qdrant-client==1.11.3
 sentence-transformers==3.3.1
 
-# Eval (ragas installed --no-deps below; its langchain<0.3 pin is too strict
+# Eval (ragas installed --no-deps in CI; its langchain<0.3 pin is too strict
 #        but the public API works fine against langchain 0.3.x at runtime)
 datasets==3.1.0
+pysbd>=0.3.4
 
 # LLOps
 langfuse==2.57.4
