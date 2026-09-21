@@ -130,3 +130,13 @@ def run_query(query: str, session_id: str = None) -> DocuSageState:
     except Exception as e:
         logger.error(f"[Graph] Unhandled error: {e}")
         raise
+
+# Langfuse tracing — called after every query
+def trace_result(query: str, result: DocuSageState):
+    try:
+        from agents.langfuse_tracer import trace_query
+        trace_id = trace_query(query, result, result.latency_ms or 0)
+        if trace_id:
+            logger.info(f"[Graph] Langfuse trace ID: {trace_id}")
+    except Exception as e:
+        logger.warning(f"[Graph] Tracing failed (non-fatal): {e}")
