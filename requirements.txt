@@ -42,7 +42,7 @@ pdfplumber==0.11.4
 
 # DB
 psycopg2-binary==2.9.10
-sqlalchemy==2.0.36
+sqlalchemy>=1.4,<2.0.36
 
 # Utils
 python-dotenv==1.0.1
