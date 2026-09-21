@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir $(grep -v openai-whisper requirements.txt | grep -v '^#' | grep -v '^$' | tr '\n' ' ')
+RUN pip install --no-cache-dir setuptools wheel
+RUN grep -v "openai-whisper" requirements.txt | grep -v "^#" | grep -v "^$" > /tmp/req_no_whisper.txt && pip install --no-cache-dir -r /tmp/req_no_whisper.txt
 RUN pip install --no-cache-dir git+https://github.com/openai/whisper.git
 
 COPY . .
