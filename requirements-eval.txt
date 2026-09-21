@@ -15,6 +15,7 @@ sentence-transformers==3.3.1
 #        but the public API works fine against langchain 0.3.x at runtime)
 datasets==3.1.0
 pysbd>=0.3.4
+appdirs>=1.4.4
 
 # LLOps
 langfuse==2.57.4
