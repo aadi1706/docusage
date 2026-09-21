@@ -11,7 +11,7 @@ langchain-openai==0.2.8
 qdrant-client==1.11.3
 sentence-transformers==3.3.1
 rank_bm25>=0.2.2
-Pillow==11.0.0
+Pillow>=9.2.0,<11.0.0
 
 # Eval (ragas installed --no-deps in CI; its langchain<0.3 pin is too strict
 #        but the public API works fine against langchain 0.3.x at runtime)
