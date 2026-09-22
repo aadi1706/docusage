@@ -26,15 +26,22 @@ _processor = None
 def get_colqwen2():
     global _model, _processor
     if _model is None:
-        from colpali_engine.models import ColQwen2, ColQwen2Processor
-        logger.info("[RetrievalAgent] Loading ColQwen2...")
-        _model = ColQwen2.from_pretrained(
-            "vidore/colqwen2-v1.0",
-            torch_dtype=torch.float32,
-            device_map="cpu",
-        )
-        _processor = ColQwen2Processor.from_pretrained("vidore/colqwen2-v1.0")
-        logger.info("[RetrievalAgent] ColQwen2 loaded ✓")
+        if os.getenv("LIGHTWEIGHT_MODE") == "true":
+            from sentence_transformers import SentenceTransformer
+            logger.info("[RetrievalAgent] LIGHTWEIGHT_MODE — loading all-MiniLM-L6-v2 (~90MB)")
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+            _processor = None
+            logger.info("[RetrievalAgent] all-MiniLM-L6-v2 loaded ✓")
+        else:
+            from colpali_engine.models import ColQwen2, ColQwen2Processor
+            logger.info("[RetrievalAgent] Loading ColQwen2...")
+            _model = ColQwen2.from_pretrained(
+                "vidore/colqwen2-v1.0",
+                torch_dtype=torch.float32,
+                device_map="cpu",
+            )
+            _processor = ColQwen2Processor.from_pretrained("vidore/colqwen2-v1.0")
+            logger.info("[RetrievalAgent] ColQwen2 loaded ✓")
     return _model, _processor
 
 
@@ -85,6 +92,9 @@ class RetrievalAgent:
 
     def _embed_query(self, query: str) -> list:
         model, processor = get_colqwen2()
+        if processor is None:
+            # LIGHTWEIGHT_MODE: SentenceTransformer returns a flat vector
+            return model.encode(query, normalize_embeddings=True).tolist()
         batch = processor.process_queries([query]).to(model.device)
         with torch.no_grad():
             embeddings = model(**batch)

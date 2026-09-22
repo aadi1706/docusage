@@ -17,3 +17,6 @@ services:
         sync: false
       - key: LANGFUSE_SECRET_KEY
         sync: false
+      - key: LIGHTWEIGHT_MODE
+        value: "true"
+        sync: false

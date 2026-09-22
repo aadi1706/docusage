@@ -73,6 +73,18 @@ Open `https://<your-app>.onrender.com/docs` for the auto-generated Swagger UI.
 
 ---
 
+## Memory / LIGHTWEIGHT_MODE
+
+The free Render tier has 512MB RAM. ColQwen2 requires ~3GB, so `render.yaml`
+sets `LIGHTWEIGHT_MODE=true` by default. In this mode the retrieval agent uses
+`sentence-transformers/all-MiniLM-L6-v2` (~90MB) for dense embeddings instead
+of ColQwen2. BM25 sparse retrieval and RRF fusion are unaffected.
+
+To use full ColQwen2 quality on a GPU or high-memory instance, remove or set
+`LIGHTWEIGHT_MODE=false` in the Render environment dashboard.
+
+---
+
 ## Performance notes
 
 - **Free tier (CPU):** ColQwen2 dense retrieval runs on CPU → ~10–15 seconds per query
