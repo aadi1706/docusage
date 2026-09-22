@@ -11,7 +11,7 @@
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aadi1706/docusage)
 
-**Live demo:** https://docusage-api.onrender.com/docs &nbsp;|&nbsp; ~5s/query on free Render tier (CPU, no GPU)
+**Live demo:** https://docusage-api.onrender.com/docs (API) · https://docusage-frontend.onrender.com (Chat UI)
 
 </div>
 
