@@ -21,8 +21,7 @@ def _render_response(data: dict):
 
     if data.get("citations"):
         with st.expander(f"📎 Citations ({len(data['citations'])})"):
-            for c in data["citations"]:
-                st.markdown(f"- {c}")
+            st.markdown("\n".join(f"- `{c}`" for c in data["citations"]))
 
     if data.get("hallucination_flags"):
         st.warning("⚠️ Hallucination flags: " + ", ".join(data["hallucination_flags"]))
