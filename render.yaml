@@ -19,7 +19,6 @@ services:
         sync: false
       - key: LIGHTWEIGHT_MODE
         value: "true"
-        sync: false
 
   - type: web
     name: docusage-frontend
@@ -31,4 +30,3 @@ services:
     envVars:
       - key: API_BASE_URL
         value: https://docusage-api.onrender.com
-        sync: false
