@@ -13,8 +13,6 @@ rank_bm25>=0.2.2
 
 # Vision / VLM (HuggingFace)
 transformers==4.46.3
-colpali-engine==0.3.4
-torch==2.5.1
 Pillow>=9.2.0,<11.0.0
 
 # Audio

@@ -8,11 +8,16 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+ARG LIGHTWEIGHT_MODE=false
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir setuptools wheel
 RUN grep -v "openai-whisper" requirements.txt | grep -v "ragas" | grep -v "^#" | grep -v "^$" > /tmp/req_no_whisper.txt && pip install --no-cache-dir -r /tmp/req_no_whisper.txt
 RUN pip install --no-cache-dir pysbd appdirs
 RUN pip install --no-cache-dir --no-deps ragas==0.1.21
+RUN if [ "$LIGHTWEIGHT_MODE" = "false" ]; then \
+      pip install --no-cache-dir torch==2.5.1 colpali-engine==0.3.4; \
+    fi
 RUN pip install --no-cache-dir setuptools && pip install --no-cache-dir openai-whisper --no-build-isolation
 
 COPY . .

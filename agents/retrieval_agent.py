@@ -9,8 +9,10 @@ Why hybrid?
 """
 import os
 import uuid
-import torch
 from typing import List
+
+if os.getenv("LIGHTWEIGHT_MODE") != "true":
+    import torch
 from loguru import logger
 from qdrant_client import QdrantClient
 from rank_bm25 import BM25Okapi

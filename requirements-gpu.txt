@@ -1,0 +1,2 @@
+torch==2.5.1
+colpali-engine==0.3.4
