@@ -29,11 +29,12 @@ def get_colqwen2():
     global _model, _processor
     if _model is None:
         if os.getenv("LIGHTWEIGHT_MODE") == "true":
-            from sentence_transformers import SentenceTransformer
-            logger.info("[RetrievalAgent] LIGHTWEIGHT_MODE — loading all-MiniLM-L6-v2 (~90MB)")
-            _model = SentenceTransformer("all-MiniLM-L6-v2")
-            _processor = None
-            logger.info("[RetrievalAgent] all-MiniLM-L6-v2 loaded ✓")
+            # Use OpenAI embeddings API — no local model, no torch, zero extra RAM
+            from openai import OpenAI
+            logger.info("[RetrievalAgent] LIGHTWEIGHT_MODE — using OpenAI text-embedding-3-small")
+            _model = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            _processor = "openai"  # sentinel: tells _embed_query which path to use
+            logger.info("[RetrievalAgent] OpenAI embeddings client ready ✓")
         else:
             from colpali_engine.models import ColQwen2, ColQwen2Processor
             logger.info("[RetrievalAgent] Loading ColQwen2...")
@@ -94,9 +95,13 @@ class RetrievalAgent:
 
     def _embed_query(self, query: str) -> list:
         model, processor = get_colqwen2()
-        if processor is None:
-            # LIGHTWEIGHT_MODE: SentenceTransformer returns a flat vector
-            return model.encode(query, normalize_embeddings=True).tolist()
+        if processor == "openai":
+            # LIGHTWEIGHT_MODE: OpenAI API embedding — no local model or torch
+            resp = model.embeddings.create(
+                input=query,
+                model="text-embedding-3-small",
+            )
+            return resp.data[0].embedding
         batch = processor.process_queries([query]).to(model.device)
         with torch.no_grad():
             embeddings = model(**batch)

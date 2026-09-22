@@ -8,12 +8,16 @@ Endpoints:
 """
 import time
 import uuid
+import os
+import psutil
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from loguru import logger
 
 from agents.graph import run_query
+
+logger.info(f"Startup complete. PID={os.getpid()}")
 
 
 app = FastAPI(
@@ -50,6 +54,16 @@ class QueryResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "docusage-api"}
+
+
+@app.get("/memory")
+def memory():
+    proc = psutil.Process(os.getpid())
+    rss_mb = proc.memory_info().rss / 1024 / 1024
+    return {
+        "rss_mb": round(rss_mb, 1),
+        "lightweight_mode": os.getenv("LIGHTWEIGHT_MODE", "false"),
+    }
 
 
 @app.post("/query", response_model=QueryResponse)
