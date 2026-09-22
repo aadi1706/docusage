@@ -20,8 +20,12 @@ jobs:
       - name: Run smoke test
         run: |
           docker run -d -p 8000:8000 --name docusage-test \
-            -e OPENAI_API_KEY=test \
+            -e OPENAI_API_KEY=test-key \
+            -e QDRANT_URL=http://localhost:6333 \
+            -e QDRANT_API_KEY=test \
+            -e LANGFUSE_PUBLIC_KEY=test \
+            -e LANGFUSE_SECRET_KEY=test \
             docusage-api:${{ github.sha }}
-          sleep 15
+          sleep 20
           curl -f http://localhost:8000/health
           docker stop docusage-test
