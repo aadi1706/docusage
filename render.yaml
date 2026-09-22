@@ -3,8 +3,6 @@ services:
     name: docusage-api
     runtime: docker
     dockerfilePath: ./Dockerfile
-    buildArgs:
-      - LIGHTWEIGHT_MODE=true
     plan: free
     region: oregon
     healthCheckPath: /health
