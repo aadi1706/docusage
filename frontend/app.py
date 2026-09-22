@@ -1,6 +1,9 @@
 """DocuSage — Streamlit chat frontend."""
+import os
 import requests
 import streamlit as st
+
+DEFAULT_API_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="DocuSage", page_icon="📄", layout="wide")
 
@@ -28,7 +31,7 @@ def _render_response(data: dict):
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("⚙️ Settings")
-    api_url = st.text_input("API base URL", value="http://localhost:8000")
+    api_url = st.text_input("API base URL", value=DEFAULT_API_URL)
 
     if st.button("🔌 Ping /health"):
         try:

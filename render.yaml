@@ -22,3 +22,15 @@ services:
       - key: LIGHTWEIGHT_MODE
         value: "true"
         sync: false
+
+  - type: web
+    name: docusage-frontend
+    runtime: python
+    buildCommand: pip install -r requirements-frontend.txt
+    startCommand: streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0
+    plan: free
+    region: oregon
+    envVars:
+      - key: API_BASE_URL
+        value: https://docusage-api.onrender.com
+        sync: false
