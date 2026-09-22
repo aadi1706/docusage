@@ -19,6 +19,7 @@ from rank_bm25 import BM25Okapi
 from .state import DocuSageState, DocumentChunk
 
 COLLECTION_NAME = "docusage_pages"
+COLLECTION_NAME_LIGHTWEIGHT = "docusage_pages_lightweight"
 RRF_K = 60  # RRF constant — 60 is the standard default
 
 _model = None
@@ -107,11 +108,16 @@ class RetrievalAgent:
             embeddings = model(**batch)
         return embeddings[0].cpu().float().numpy().tolist()
 
+    def _collection_name(self) -> str:
+        if os.getenv("LIGHTWEIGHT_MODE") == "true":
+            return COLLECTION_NAME_LIGHTWEIGHT
+        return COLLECTION_NAME
+
     def _dense_search(self, query: str, limit: int = 5) -> List[DocumentChunk]:
-        """ColQwen2 visual embedding search."""
+        """ColQwen2 (full) or OpenAI text-embedding-3-small (lightweight) search."""
         query_embedding = self._embed_query(query)
         results = self._get_client().query_points(
-            collection_name=COLLECTION_NAME,
+            collection_name=self._collection_name(),
             query=query_embedding,
             limit=limit,
         )
@@ -131,7 +137,7 @@ class RetrievalAgent:
         """Build BM25 index from all text in Qdrant."""
         logger.info("[RetrievalAgent] Building BM25 index...")
         all_points = self._get_client().scroll(
-            collection_name=COLLECTION_NAME,
+            collection_name=self._collection_name(),
             limit=500,
             with_payload=True,
             with_vectors=False,
