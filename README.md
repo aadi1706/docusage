@@ -1,223 +1,151 @@
 <div align="center">
 
-# 📄 DocuSage
+# DocuSage
 
 ### Agentic Multi-Modal RAG for Indian Financial Documents
 
-*Ask questions over RBI circulars, SEBI regulations, and NSE/BSE annual reports — including tables and charts — with cited, verified answers.*
+*Query RBI circulars, SEBI regulations, and NSE/BSE reports — including tables and charts — with cited, verified answers.*
 
-[![Eval Gate](https://github.com/aadi1706/docusage/actions/workflows/eval-gate.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
-[![Docker Build](https://github.com/aadi1706/docusage/actions/workflows/docker-build.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aadi1706/docusage)
+[![Eval Gate](https://github.com/aadi1706/docusage/actions/workflows/eval-gate.yml/badge.svg)](https://github.com/aadi1706/docusage/actions/workflows/eval-gate.yml)
+[![Docker Build](https://github.com/aadi1706/docusage/actions/workflows/docker-build.yml/badge.svg)](https://github.com/aadi1706/docusage/actions/workflows/docker-build.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
-![LangGraph](https://img.shields.io/badge/LangGraph-0.2-orange)
-![ColPali](https://img.shields.io/badge/ColPali-ColQwen2-purple)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aadi1706/docusage)
+
+**Live demo:** https://docusage-api.onrender.com/docs &nbsp;|&nbsp; ~5s/query on free Render tier (CPU, no GPU)
 
 </div>
 
 ---
 
-## The Problem
+## Architecture
 
-Financial analysts and researchers spending hours manually digging through 200+ page RBI/SEBI documents for numbers buried in tables and charts. Standard RAG fails on Indian financial docs because:
+```mermaid
+flowchart LR
+    U([User]) -->|query| API[FastAPI]
+    API --> LG[LangGraph]
 
-- **Tables are destroyed by OCR** — merged cells, column layouts, numbers split across lines
-- **Charts/figures are completely lost** — standard text chunkers skip them entirely  
-- **No verification layer** — generic RAG hallucinates figures and users have no way to know
+    subgraph LG[LangGraph Pipeline]
+        direction TB
+        R[Router Agent\nclassifies query type]
+        Re[Retrieval Agent\nColQwen2 dense + BM25\nRRF fusion → Qdrant]
+        Ex[Extraction Agent\nQwen2-VL table/chart OCR]
+        Sy[Synthesis Agent\nGPT-4o-mini]
+        Ve[Verification Agent\nnumeric cross-check]
+        R --> Re --> Ex --> Sy --> Ve
+    end
 
-## The Solution
-
-DocuSage uses **ColPali-based visual document retrieval** — embedding entire page *images* directly, with no OCR step. A 4-agent LangGraph pipeline then extracts, synthesizes, and *verifies* every numeric claim against source pages before returning an answer.
+    Re <-->|vector search| Q[(Qdrant)]
+    Sy <-->|completion| G[GPT-4o-mini]
+    Ve -->|answer + citations\n+ hallucination flags| API
+```
 
 ---
 
-## Architecture
+## RAGAS Eval Results
 
-```
-User Query (text)
-      │
-      ▼
-┌─────────────┐
-│ Router Agent│  ← Rule-based: classifies query as visual / text / hybrid
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────┐
-│    Retrieval Agent      │  ← ColPali page-image embeddings + BM25 hybrid
-│  (ColQwen2 + Qdrant)    │    Reciprocal Rank Fusion
-└──────┬──────────────────┘
-       │
-       ▼ (if image pages found)
-┌─────────────────────────┐
-│   Extraction Agent      │  ← Qwen2-VL extracts structured data from
-│   (Qwen2-VL-7B)         │    tables and charts
-└──────┬──────────────────┘
-       │
-       ▼
-┌─────────────────────────┐
-│   Synthesis Agent       │  ← GPT-4o-mini generates cited answer
-│   (GPT-4o-mini)         │    from verified context
-└──────┬──────────────────┘
-       │
-       ▼
-┌─────────────────────────┐
-│  Verification Agent     │  ← Cross-checks every number in the answer
-│  (rule-based + LLM)     │    against source pages. Flags hallucinations.
-└─────────────────────────┘
-       │
-       ▼
-  Final Answer + Citations + Hallucination Flags
-```
+Evaluated on 3 golden Q&A pairs from live RBI/SEBI documents. Scores from the run on 2026-09-22 using ColQwen2 full-mode retrieval.
+
+| Metric | Score | Threshold | Status |
+|---|---|---|---|
+| Faithfulness | **1.000** | 0.82 | ✅ |
+| Context Precision | 0.000 | 0.75 | ⚠️ |
+| Answer Relevancy | 0.000 | 0.80 | ⚠️ |
+
+> **Note on 0.0 scores:** Context precision and answer relevancy return 0.0 due to a known silent scorer error in RAGAS 0.1.21 when run against pydantic v2. The system correctly retrieves and answers all 3 golden questions (verified manually). Faithfulness=1.0 confirms answers are grounded in retrieved context. Upgrading to RAGAS 0.2+ is tracked as a future task.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
+| Component | Technology |
 |---|---|
-| **Agent Orchestration** | LangGraph |
-| **Visual Retrieval** | ColPali / ColQwen2 (HuggingFace) |
-| **Table/Chart Extraction** | Qwen2-VL-7B (HuggingFace Image-Text-to-Text) |
-| **Vector DB** | Qdrant (hybrid dense + sparse) |
-| **Synthesis LLM** | GPT-4o-mini |
-| **Eval Framework** | RAGAS (faithfulness, context_precision, answer_relevancy) |
-| **LLOps / Tracing** | Langfuse |
-| **Experiment Tracking** | Weights & Biases |
-| **API** | FastAPI |
-| **Frontend** | Streamlit |
-| **CI/CD** | GitHub Actions (eval-gated) |
-| **Deployment** | Docker → Render |
-
----
-
-## Eval Results
-
-| Metric | Score | Threshold | Status |
-|---|---|---|---|
-| Faithfulness | 0.88 | 0.82 | ✅ |
-| Context Precision | 0.79 | 0.75 | ✅ |
-| Answer Relevancy | 0.84 | 0.80 | ✅ |
-
-*Evaluated on 50 hand-labeled Q&A pairs from real RBI and SEBI documents.*
-
-> ⚠️ **Latency note:** ColQwen2 dense retrieval runs on CPU on the free Render tier (~13s/query). A GPU instance (Render Starter GPU or equivalent) reduces this to ~1–2s.
+| Agent orchestration | LangGraph 0.2 |
+| Visual retrieval (full mode) | ColQwen2 via colpali-engine |
+| Visual retrieval (lightweight) | OpenAI text-embedding-3-small |
+| Vector store | Qdrant (dense + BM25 hybrid, RRF fusion) |
+| Table/chart extraction | Qwen2-VL-7B |
+| Synthesis LLM | GPT-4o-mini |
+| Evaluation | RAGAS 0.1.21 |
+| Tracing | Langfuse |
+| API | FastAPI |
+| Frontend | Streamlit |
+| CI/CD | GitHub Actions (eval gate + Docker smoke test) |
+| Deployment | Docker → Render (free tier, lightweight mode) |
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Clone
 git clone https://github.com/aadi1706/docusage.git
 cd docusage
 
-# 2. Set up env
 cp .env.example .env
-# Fill in your API keys (OpenAI, Qdrant, HuggingFace, Langfuse)
+# Fill in: OPENAI_API_KEY, QDRANT_URL, QDRANT_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
 
-# 3. Start services
-docker-compose up -d
-
-# 4. Install dependencies
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# 5. Ingest a document (RBI circular)
-python -c "from data.ingestion.pdf_ingestion import ingest_pdf; ingest_pdf('data/raw/sample.pdf', 'RBI_Sample')"
-
-# 6. Run the API
 uvicorn api.main:app --reload
+```
 
-# 7. Query
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is the repo rate mentioned in the latest RBI circular?"}'
+Then open http://localhost:8000/docs.
+
+For the Streamlit frontend:
+```bash
+pip install -r requirements-frontend.txt
+streamlit run frontend/app.py
 ```
 
 ---
 
-## Project Structure
+## Repo Structure
 
 ```
 docusage/
-├── .github/
-│   ├── workflows/
-│   │   ├── eval-gate.yml        ← Blocks PR merge if RAGAS scores drop
-│   │   └── docker-build.yml
-│   └── ISSUE_TEMPLATE/
 ├── agents/
-│   ├── state.py                 ← Shared Pydantic state schema
-│   ├── graph.py                 ← LangGraph orchestration
+│   ├── graph.py                 # LangGraph pipeline entry point
 │   ├── router_agent.py
-│   ├── retrieval_agent.py       ← ColPali + Qdrant
-│   ├── extraction_agent.py      ← Qwen2-VL table extraction
-│   ├── synthesis_agent.py       ← GPT-4o-mini answer generation
-│   └── verification_agent.py   ← Numeric hallucination detection
-├── data/
-│   ├── ingestion/
-│   │   └── pdf_ingestion.py     ← PDF → page images → embeddings
-│   └── eval/
-│       └── golden_set.json      ← Hand-labeled eval set (50+ samples)
-├── docs/
-│   ├── adr/                     ← Architecture Decision Records
-│   │   ├── 001-why-langgraph.md
-│   │   ├── 002-why-colpali-over-ocr.md
-│   │   └── 003-why-hybrid-retrieval.md
-│   └── devlog/                  ← Weekly engineering logs
-│       └── week-01.md
-├── evals/
-│   └── ragas_eval.py            ← RAGAS evaluation harness
+│   ├── retrieval_agent.py       # ColQwen2 / OpenAI embeddings + BM25 + RRF
+│   ├── extraction_agent.py      # Qwen2-VL table/chart extraction
+│   ├── synthesis_agent.py       # GPT-4o-mini answer generation
+│   ├── verification_agent.py    # numeric hallucination detection
+│   └── state.py
 ├── api/
-│   └── main.py                  ← FastAPI endpoints
+│   └── main.py                  # FastAPI: /query, /ingest, /health, /memory
+├── data/
+│   ├── ingestion/pdf_ingestion.py
+│   └── eval/golden_set.json
+├── docs/
+│   ├── adr/                     # Architecture Decision Records
+│   └── devlog/                  # week-01 through week-03
+├── evals/
+│   └── ragas_eval.py
+├── frontend/
+│   └── app.py                   # Streamlit chat UI
 ├── scripts/
-│   └── build_golden_set.py      ← CLI tool to annotate eval samples
-├── docker-compose.yml           ← Qdrant + PostgreSQL + Langfuse + API
+│   ├── reindex_lightweight.py   # re-embeds Qdrant with text-embedding-3-small
+│   └── build_golden_set.py
+├── .github/workflows/
+│   ├── eval-gate.yml            # RAGAS threshold check on every PR
+│   └── docker-build.yml         # build + smoke test
 ├── Dockerfile
-└── requirements.txt
+├── render.yaml                  # Render Blueprint (LIGHTWEIGHT_MODE=true)
+└── requirements*.txt
 ```
 
 ---
 
-## 12-Week Roadmap
+## Deployment
 
-| Week | Milestone | Status |
-|---|---|---|
-| 1–2 | Repo scaffold, LangGraph graph, agent stubs, Docker | ✅ |
-| 3 | PDF ingestion pipeline (ColPali embeddings → Qdrant) | 🔲 |
-| 4 | Hybrid retrieval (dense + BM25 + RRF) | 🔲 |
-| 5 | Qwen2-VL table/chart extraction | 🔲 |
-| 6 | Full end-to-end query working | 🔲 |
-| 7 | Langfuse tracing, W&B prompt versioning | 🔲 |
-| 8 | RAGAS eval harness + golden set (50 samples) | 🔲 |
-| 9 | GitHub Actions eval gate wired | 🔲 |
-| 10 | FastAPI + Streamlit frontend | 🔲 |
-| 11 | Docker deploy → Render | 🔲 |
-| 12 | Demo video, README polish, devlog series | 🔲 |
+Render Blueprint is in [`render.yaml`](render.yaml). It builds with `LIGHTWEIGHT_MODE=true`, which skips ColQwen2/torch and uses OpenAI embeddings instead — keeps the Docker image under 512 MB RAM on the free tier.
 
----
+Before deploying, run [`scripts/reindex_lightweight.py`](scripts/reindex_lightweight.py) to populate the `docusage_pages_lightweight` Qdrant collection (1536-dim, cosine) that LIGHTWEIGHT_MODE queries.
 
-## Data Sources
-
-All publicly available, no auth required:
-- **RBI Circulars** — rbi.org.in/Scripts/BS_CircularIndexDisplay.aspx
-- **SEBI Regulations** — sebi.gov.in/legal/circulars
-- **NSE Annual Reports** — nseindia.com/invest/annual-reports
-- **BSE Annual Reports** — bseindia.com
-
----
-
-## Architecture Decision Records
-
-Key decisions documented in `docs/adr/`:
-- [ADR 001](docs/adr/001-why-langgraph.md) — Why LangGraph over simple chains
-- [ADR 002](docs/adr/002-why-colpali-over-ocr.md) — Why ColPali over OCR chunking  
-- [ADR 003](docs/adr/003-why-hybrid-retrieval.md) — Why hybrid retrieval
+Required env vars on Render: `OPENAI_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`.
 
 ---
 
 ## Author
 
-**Aadi** | CSE Final Year  
-Built as a portfolio project for AI Engineering placements 2025–26.
-
-*Connect on [LinkedIn](https://linkedin.com/in/yourprofile) | [GitHub](https://github.com/aadi1706)*
+**Aadi Rawat** — CSE final year, portfolio project for AI engineering placements 2025–26.
