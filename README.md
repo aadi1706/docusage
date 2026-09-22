@@ -8,6 +8,7 @@
 
 [![Eval Gate](https://github.com/aadi1706/docusage/actions/workflows/eval-gate.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
 [![Docker Build](https://github.com/aadi1706/docusage/actions/workflows/docker-build.yml/badge.svg)](https://github.com/aadi1706/docusage/actions)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aadi1706/docusage)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.2-orange)
 ![ColPali](https://img.shields.io/badge/ColPali-ColQwen2-purple)
@@ -98,6 +99,8 @@ User Query (text)
 | Answer Relevancy | 0.84 | 0.80 | ✅ |
 
 *Evaluated on 50 hand-labeled Q&A pairs from real RBI and SEBI documents.*
+
+> ⚠️ **Latency note:** ColQwen2 dense retrieval runs on CPU on the free Render tier (~13s/query). A GPU instance (Render Starter GPU or equivalent) reduces this to ~1–2s.
 
 ---
 
