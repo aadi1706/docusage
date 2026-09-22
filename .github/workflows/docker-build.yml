@@ -26,6 +26,19 @@ jobs:
             -e LANGFUSE_PUBLIC_KEY=test \
             -e LANGFUSE_SECRET_KEY=test \
             docusage-api:${{ github.sha }}
-          sleep 20
+
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health; then
+              echo "✅ Health check passed on attempt $i"
+              break
+            fi
+            echo "Attempt $i/30 — waiting 2s..."
+            sleep 2
+          done
+
           curl -f http://localhost:8000/health
           docker stop docusage-test
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker logs docusage-test || true

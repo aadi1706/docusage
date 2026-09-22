@@ -68,13 +68,20 @@ def reciprocal_rank_fusion(
 
 class RetrievalAgent:
     def __init__(self):
-        self.client = QdrantClient(
-            url=os.getenv("QDRANT_URL", "http://localhost:6333"),
-            api_key=os.getenv("QDRANT_API_KEY"),
-            timeout=120,
-        )
+        self._qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+        self._qdrant_api_key = os.getenv("QDRANT_API_KEY")
+        self._client = None
         self._bm25 = None
         self._bm25_chunks = []
+
+    def _get_client(self) -> QdrantClient:
+        if self._client is None:
+            self._client = QdrantClient(
+                url=self._qdrant_url,
+                api_key=self._qdrant_api_key,
+                timeout=120,
+            )
+        return self._client
 
     def _embed_query(self, query: str) -> list:
         model, processor = get_colqwen2()
@@ -86,7 +93,7 @@ class RetrievalAgent:
     def _dense_search(self, query: str, limit: int = 5) -> List[DocumentChunk]:
         """ColQwen2 visual embedding search."""
         query_embedding = self._embed_query(query)
-        results = self.client.query_points(
+        results = self._get_client().query_points(
             collection_name=COLLECTION_NAME,
             query=query_embedding,
             limit=limit,
@@ -106,7 +113,7 @@ class RetrievalAgent:
     def _build_bm25_index(self):
         """Build BM25 index from all text in Qdrant."""
         logger.info("[RetrievalAgent] Building BM25 index...")
-        all_points = self.client.scroll(
+        all_points = self._get_client().scroll(
             collection_name=COLLECTION_NAME,
             limit=500,
             with_payload=True,

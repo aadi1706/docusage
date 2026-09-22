@@ -25,11 +25,16 @@ Rules:
 
 class SynthesisAgent:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",  # cheap + fast; swap to gpt-4o for prod
-            temperature=0,
-            api_key=os.getenv("OPENAI_API_KEY"),
-        )
+        self._llm = None
+
+    def _get_llm(self):
+        if self._llm is None:
+            self._llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0,
+                api_key=os.getenv("OPENAI_API_KEY"),
+            )
+        return self._llm
 
     def run(self, state: DocuSageState) -> DocuSageState:
         logger.info("[SynthesisAgent] Generating final answer")
@@ -41,7 +46,7 @@ class SynthesisAgent:
         ]
 
         try:
-            response = self.llm.invoke(messages)
+            response = self._get_llm().invoke(messages)
             state.final_answer = response.content
             state.citations = self._extract_citations(state)
         except Exception as e:
