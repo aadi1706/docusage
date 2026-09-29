@@ -27,7 +27,18 @@ class VerificationAgent:
 
         # Extract all numbers from the answer
         numbers_in_answer = set(re.findall(r"\b\d[\d,\.]*\b", state.final_answer))
-        
+
+        # Whitelist numbers that appear in page-citation context so we never
+        # flag "Page 76", "(Page 14)", "RBI_MPC_Aug2024 (Page 2)", etc.
+        # Patterns covered:
+        #   "Page 76"            →  preceded by "Page " (case-insensitive)
+        #   "(Page 76)"          →  inside parentheses with "Page"
+        #   "Source: …, Page 2"  →  any "Page \d+" substring
+        page_citation_nums = set(
+            re.findall(r"[Pp]age\s+(\d+)", state.final_answer)
+        )
+        numbers_in_answer -= page_citation_nums
+
         # Build corpus of all retrieved text
         corpus = " ".join(c.content for c in state.retrieved_chunks)
         if state.extracted_data:
